@@ -76,3 +76,38 @@ public:
     bool isCheckmate(char kingColor);
     bool isStalemate(char playerColor);
 };
+
+// =================================================
+//                    PIECE BASE
+// =================================================
+class Piece {
+protected:
+    char color;
+    Position position;
+    char symbol;
+    bool hasMoved;
+
+public:
+    Piece(char c, int r, int col, char sym)
+        :color(c), position(r, col), symbol(sym), hasMoved(false) {
+    }
+
+    virtual ~Piece() {}
+
+    virtual bool isValidMove(Position dest, Board& board) = 0;
+    virtual string getPieceName() const = 0;
+
+    char getColor() const { return color; }
+    char getSymbol() const { return symbol; }
+    Position getPosition() const { return position; }
+
+    void setPosition(Position p) {
+        position = p;
+        hasMoved = true;
+    }
+
+    bool getHasMoved() const { return hasMoved; }
+    void setHasMoved(bool m) { hasMoved = m; }
+
+    bool isPathClear(Position dest, Board& board);
+};
