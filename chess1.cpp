@@ -263,3 +263,92 @@ bool Board::isStalemate(char playerColor) {
         return false;
     return !hasLegalMove(playerColor);
 }
+
+
+// =================================================
+//                DERIVED PIECES
+// =================================================
+
+class Pawn : public Piece {
+public:
+    Pawn(char c, int r, int col)
+        :Piece(c, r, col, (c == 'W' ? 'P' : 'p')) {
+    }
+    string getPieceName() const { return "Pawn"; }
+    bool isValidMove(Position dest, Board& board);
+};
+
+class Rook : public Piece {
+public:
+    Rook(char c, int r, int col)
+        :Piece(c, r, col, (c == 'W' ? 'R' : 'r')) {
+    }
+    string getPieceName() const { return "Rook"; }
+    bool isValidMove(Position dest, Board& board);
+};
+
+class Knight : public Piece {
+public:
+    Knight(char c, int r, int col)
+        :Piece(c, r, col, (c == 'W' ? 'N' : 'n')) {
+    }
+    string getPieceName() const { return "Knight"; }
+    bool isValidMove(Position dest, Board& board);
+};
+
+class Bishop : public Piece {
+public:
+    Bishop(char c, int r, int col)
+        :Piece(c, r, col, (c == 'W' ? 'B' : 'b')) {
+    }
+    string getPieceName() const { return "Bishop"; }
+    bool isValidMove(Position dest, Board& board);
+};
+
+class Queen : public Piece {
+public:
+    Queen(char c, int r, int col)
+        :Piece(c, r, col, (c == 'W' ? 'Q' : 'q')) {
+    }
+    string getPieceName() const { return "Queen"; }
+    bool isValidMove(Position dest, Board& board);
+};
+
+class King : public Piece {
+public:
+    King(char c, int r, int col)
+        :Piece(c, r, col, (c == 'W' ? 'K' : 'k')) {
+    }
+    string getPieceName() const { return "King"; }
+    bool isValidMove(Position dest, Board& board);
+private:
+    bool isCastlingValid(Position dest, Board& board);
+};
+
+
+// =================================================
+//                  PATH CHECKER
+// =================================================
+bool Piece::isPathClear(Position dest, Board& board) {
+    int rowStep = 0, colStep = 0;
+
+    if (dest.getRow() > position.getRow()) rowStep = 1;
+    else if (dest.getRow() < position.getRow()) rowStep = -1;
+
+    if (dest.getCol() > position.getCol()) colStep = 1;
+    else if (dest.getCol() < position.getCol()) colStep = -1;
+
+    int r = position.getRow() + rowStep;
+    int c = position.getCol() + colStep;
+
+    while (r != dest.getRow() || c != dest.getCol()) {
+        if (board.getPiece(r, c) != nullptr)
+            return false;
+        r += rowStep;
+        c += colStep;
+    }
+
+    Piece* target = board.getPiece(dest);
+    if (target == nullptr) return true;
+    return target->getColor() != color;
+}
