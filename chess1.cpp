@@ -111,3 +111,155 @@ public:
 
     bool isPathClear(Position dest, Board& board);
 };
+
+// =================================================
+//              BOARD IMPLEMENTATION
+// =================================================
+Board::Board() :lastPawnDoubleMove(-1, -1), lastMoveWasPawnDouble(false) {
+    for (int i = 0; i < 8; i++)
+        for (int j = 0; j < 8; j++)
+            squares[i][j] = nullptr;
+}
+
+Board::~Board() {
+    for (int i = 0; i < 8; i++)
+        for (int j = 0; j < 8; j++)
+            if (squares[i][j] != nullptr)
+                delete squares[i][j];
+}
+
+Piece* Board::getPiece(int r, int c) const {
+    if (r < 0 || r>7 || c < 0 || c>7) return nullptr;
+    return squares[r][c];
+}
+
+Piece* Board::getPiece(Position p) const {
+    return getPiece(p.getRow(), p.getCol());
+}
+
+void Board::setPiece(int r, int c, Piece* p) {
+    squares[r][c] = p;
+}
+
+void Board::setPiece(Position pos, Piece* p) {
+    setPiece(pos.getRow(), pos.getCol(), p);
+}
+
+void Board::removePiece(int r, int c) {
+    if (r >= 0 && r < 8 && c >= 0 && c < 8) {
+        if (squares[r][c] != nullptr) {
+            delete squares[r][c];
+            squares[r][c] = nullptr;
+        }
+    }
+}
+
+void Board::removePiece(Position p) {
+    removePiece(p.getRow(), p.getCol());
+}
+
+void Board::setLastPawnDoubleMove(Position p) {
+    lastPawnDoubleMove = p;
+    lastMoveWasPawnDouble = true;
+}
+
+void Board::clearLastPawnDoubleMove() {
+    lastPawnDoubleMove = Position(-1, -1);
+    lastMoveWasPawnDouble = false;
+}
+
+// Find the King of given color
+Position Board::findKing(char color) const {
+    char kingSymbol = (color == 'W' ? 'K' : 'k');
+    for (int i = 0; i < 8; i++) {
+        for (int j = 0; j < 8; j++) {
+            if (squares[i][j] != nullptr && squares[i][j]->getSymbol() == kingSymbol) {
+                return Position(i, j);
+            }
+        }
+    }
+    return Position(-1, -1);
+}
+
+// Check if a square is under attack by pieces of a given color
+bool Board::isSquareUnderAttack(Position pos, char byColor) const {
+    for (int i = 0; i < 8; i++) {
+        for (int j = 0; j < 8; j++) {
+            Piece* piece = squares[i][j];
+            if (piece != nullptr && piece->getColor() == byColor) {
+                // Need to create a temporary non-const board for validation
+                Board* tempBoard = const_cast<Board*>(this);
+                if (piece->isValidMove(pos, *tempBoard)) {
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+
+// Check if the king of given color is in check
+bool Board::isInCheck(char kingColor) const {
+    Position kingPos = findKing(kingColor);
+    if (kingPos.getRow() == -1) return false;
+
+    char opponentColor = (kingColor == 'W' ? 'B' : 'W');
+    return isSquareUnderAttack(kingPos, opponentColor);
+}
+
+// Check if player has any legal moves
+bool Board::hasLegalMove(char playerColor) {
+    // Try every piece of the player
+    for (int sr = 0; sr < 8; sr++) {
+        for (int sc = 0; sc < 8; sc++) {
+            Piece* piece = squares[sr][sc];
+            if (piece == nullptr || piece->getColor() != playerColor)
+                continue;
+
+            // Try every possible destination
+            for (int dr = 0; dr < 8; dr++) {
+                for (int dc = 0; dc < 8; dc++) {
+                    Position dest(dr, dc);
+
+                    if (!piece->isValidMove(dest, *this))
+                        continue;
+
+                    // Simulate the move
+                    Position from = piece->getPosition();
+                    Piece* captured = squares[dr][dc];
+
+                    squares[sr][sc] = nullptr;
+                    squares[dr][dc] = piece;
+                    Position oldPos = piece->getPosition();
+                    piece->setPosition(dest);
+
+                    // Check if king is still in check
+                    bool stillInCheck = isInCheck(playerColor);
+
+                    // Undo the move
+                    squares[dr][dc] = captured;
+                    squares[sr][sc] = piece;
+                    piece->setPosition(oldPos);
+
+                    if (!stillInCheck)
+                        return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+
+// Check if it's checkmate
+bool Board::isCheckmate(char kingColor) {
+    if (!isInCheck(kingColor))
+        return false;
+    return !hasLegalMove(kingColor);
+}
+
+// Check if it's stalemate
+bool Board::isStalemate(char playerColor) {
+    if (isInCheck(playerColor))
+        return false;
+    return !hasLegalMove(playerColor);
+}
