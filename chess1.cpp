@@ -417,6 +417,4 @@ bool Rook::isValidMove(Position dest, Board& board) {
         position.getCol() != dest.getCol())
         return false;
     return isPathClear(dest, board);
-=======
->>>>>>> abcdce66047b72a54b81eaa80316648b244ff4f3
 }
