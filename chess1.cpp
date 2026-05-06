@@ -418,3 +418,27 @@ bool Rook::isValidMove(Position dest, Board& board) {
         return false;
     return isPathClear(dest, board);
 }
+
+// =================================================
+//                BISHOP
+// =================================================
+bool Bishop::isValidMove(Position dest, Board& board) {
+    int r = absValue(dest.getRow() - position.getRow());
+    int c = absValue(dest.getCol() - position.getCol());
+    if (r != c) return false;
+    return isPathClear(dest, board);
+}
+
+
+// =================================================
+//                QUEEN
+// =================================================
+bool Queen::isValidMove(Position dest, Board& board) {
+    int r = absValue(dest.getRow() - position.getRow());
+    int c = absValue(dest.getCol() - position.getCol());
+    if (r == c ||
+        position.getRow() == dest.getRow() ||
+        position.getCol() == dest.getCol())
+        return isPathClear(dest, board);
+    return false;
+}
