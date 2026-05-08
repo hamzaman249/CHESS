@@ -560,3 +560,31 @@ void Board::display() const {
 
     cout << "    a   b   c   d   e   f   g   h\n\n";
 }
+
+// =================================================
+//                      GAME
+// =================================================
+
+class Game {
+private:
+    Board board;
+    char currentPlayer;
+    bool gameOver;
+
+public:
+    Game() :currentPlayer('W'), gameOver(false) {
+        board.setupBoard();
+    }
+
+    void play();
+
+private:
+    Position parsePosition(string s);
+
+    bool makeMove(string from, string to);
+    bool executeMove(Piece* piece, Position from, Position to);
+    bool executeCastling(King* king, Position from, Position to);
+
+    void promotePawn(Position pos);
+    void checkGameStatus();
+};
