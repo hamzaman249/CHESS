@@ -588,3 +588,19 @@ private:
     void promotePawn(Position pos);
     void checkGameStatus();
 };
+
+
+// =================================================
+//                  MOVE PARSING
+// =================================================
+
+Position Game::parsePosition(string pos) {
+    if (pos.length() != 2)
+        return Position(-1, -1);
+
+    char file = toLowerCase(pos[0]);
+    int col = file - 'a';
+    int row = 8 - (pos[1] - '0');
+
+    return Position(row, col);
+}
