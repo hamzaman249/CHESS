@@ -487,3 +487,76 @@ bool King::isValidMove(Position dest, Board& board) {
 
     return false;
 }
+
+// =================================================
+//              BOARD SETUP & DISPLAY
+// =================================================
+
+void Board::setupBoard() {
+    // Black back rank
+    squares[0][0] = new Rook('B', 0, 0);
+    squares[0][1] = new Knight('B', 0, 1);
+    squares[0][2] = new Bishop('B', 0, 2);
+    squares[0][3] = new Queen('B', 0, 3);
+    squares[0][4] = new King('B', 0, 4);
+    squares[0][5] = new Bishop('B', 0, 5);
+    squares[0][6] = new Knight('B', 0, 6);
+    squares[0][7] = new Rook('B', 0, 7);
+
+    // Black pawns
+    for (int i = 0; i < 8; i++)
+        squares[1][i] = new Pawn('B', 1, i);
+
+    // White pawns
+    for (int i = 0; i < 8; i++)
+        squares[6][i] = new Pawn('W', 6, i);
+
+    // White back rank
+    squares[7][0] = new Rook('W', 7, 0);
+    squares[7][1] = new Knight('W', 7, 1);
+    squares[7][2] = new Bishop('W', 7, 2);
+    squares[7][3] = new Queen('W', 7, 3);
+    squares[7][4] = new King('W', 7, 4);
+    squares[7][5] = new Bishop('W', 7, 5);
+    squares[7][6] = new Knight('W', 7, 6);
+    squares[7][7] = new Rook('W', 7, 7);
+}
+
+
+void Board::display() const {
+    // ANSI color codes
+    const string RESET = "\033[0m";
+    const string WHITE_BG = "\033[47m";  // White background
+    const string BLACK_BG = "\033[100m"; // Gray background (for black squares)
+    const string BLACK_TEXT = "\033[30m"; // Black text
+    const string WHITE_TEXT = "\033[97m"; // Bright white text
+
+    cout << "\n    a   b   c   d   e   f   g   h\n";
+    cout << "  +---+---+---+---+---+---+---+---+\n";
+
+    for (int i = 0; i < 8; i++) {
+        cout << 8 - i << " |";
+        for (int j = 0; j < 8; j++) {
+            // Determine square color (checkerboard pattern)
+            bool isWhiteSquare = (i + j) % 2 == 0;
+
+            if (isWhiteSquare) {
+                cout << WHITE_BG << BLACK_TEXT;
+            }
+            else {
+                cout << BLACK_BG << WHITE_TEXT;
+            }
+
+            if (squares[i][j])
+                cout << " " << squares[i][j]->getSymbol() << " ";
+            else
+                cout << "   ";
+
+            cout << RESET << "|";
+        }
+        cout << " " << 8 - i << "\n";
+        cout << "  +---+---+---+---+---+---+---+---+\n";
+    }
+
+    cout << "    a   b   c   d   e   f   g   h\n\n";
+}
