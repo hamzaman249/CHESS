@@ -604,3 +604,75 @@ Position Game::parsePosition(string pos) {
 
     return Position(row, col);
 }
+
+// =================================================
+//                      GAME LOOP
+// =================================================
+
+void Game::play() {
+
+    cout << "\n============== CHESS GAME ==============\n";
+    cout << "White = Uppercase | Black = Lowercase\n";
+    cout << "Enter moves: e2 e4\n";
+    cout << "Castling: e1 g1 or e1 c1\n";
+    cout << "En passant: automatic\n";
+    cout << "Promotion: you choose piece\n";
+    cout << "Type 'quit' to exit\n";
+    cout << "========================================\n";
+
+    while (!gameOver) {
+
+        board.display();
+
+        // Check game status before showing turn
+        checkGameStatus();
+        if (gameOver) break;
+
+        cout << (currentPlayer == 'W' ? "White" : "Black") << "'s turn.\n";
+
+        // Display check status
+        if (board.isInCheck(currentPlayer)) {
+            cout << "*** YOU ARE IN CHECK! ***\n";
+        }
+
+        cout << "Enter move (from to): ";
+
+        string from, to;
+        cin >> from;
+
+        if (from == "quit" || from == "QUIT") {
+            cout << "\nGame ended. Goodbye!\n";
+            return;
+        }
+
+        cin >> to;
+
+        if (makeMove(from, to)) {
+            currentPlayer = (currentPlayer == 'W' ? 'B' : 'W');
+        }
+        else {
+            cout << "\n*** Invalid move! Try again. ***\n\n";
+        }
+    }
+
+    board.display();
+    cout << "\n=========== GAME OVER ===========\n";
+}
+
+
+// =================================================
+//              CHECK GAME STATUS
+// =================================================
+
+void Game::checkGameStatus() {
+    if (board.isCheckmate(currentPlayer)) {
+        cout << "\n************ CHECKMATE! ************\n";
+        cout << (currentPlayer == 'W' ? "Black" : "White") << " wins!\n";
+        gameOver = true;
+    }
+    else if (board.isStalemate(currentPlayer)) {
+        cout << "\n************ STALEMATE! ************\n";
+        cout << "The game is a draw!\n";
+        gameOver = true;
+    }
+}
