@@ -676,3 +676,161 @@ void Game::checkGameStatus() {
         gameOver = true;
     }
 }
+
+
+// =================================================
+//                MOVE VALIDATION
+// =============================================
+
+// =================================================
+//                MOVE EXECUTION
+// =================================================
+
+bool Game::executeCastling(King* king, Position from, Position to) {
+    int r = from.getRow();
+    int direction = (to.getCol() > from.getCol()) ? 1 : -1;
+    int rookFromCol = (direction == 1) ? 7 : 0;
+    int rookToCol = (direction == 1) ? 5 : 3;
+
+    Piece* rook = board.getPiece(r, rookFromCol);
+
+    board.setPiece(to, king);
+    board.setPiece(r, from.getCol(), nullptr);
+    king->setPosition(to);
+
+    board.setPiece(r, rookToCol, rook);
+    board.setPiece(r, rookFromCol, nullptr);
+    rook->setPosition(Position(r, rookToCol));
+
+    board.clearLastPawnDoubleMove();
+    return true;
+}
+
+void Game::promotePawn(Position pos) {
+    cout << "Pawn promotion! Choose piece (Q/R/B/N): ";
+    char choice;
+    cin >> choice;
+    choice = toupper(choice);
+
+    Piece* newPiece = nullptr;
+    char c = board.getPiece(pos)->getColor();
+
+    board.removePiece(pos);
+
+    switch (choice) {
+    case 'R': newPiece = new Rook(c, pos.getRow(), pos.getCol());   break;
+    case 'B': newPiece = new Bishop(c, pos.getRow(), pos.getCol()); break;
+    case 'N': newPiece = new Knight(c, pos.getRow(), pos.getCol()); break;
+    default:  newPiece = new Queen(c, pos.getRow(), pos.getCol());  break;
+    }
+
+    board.setPiece(pos, newPiece);
+}
+
+bool Game::executeMove(Piece* piece, Position from, Position to) {
+    // En passant capture
+    if (piece->getPieceName() == "Pawn") {
+        int colDiff = to.getCol() - from.getCol();
+        if (colDiff != 0 && board.getPiece(to) == nullptr) {
+            // Captured pawn sits on same row as 'from', same col as 'to'
+            board.removePiece(Position(from.getRow(), to.getCol()));
+        }
+    }
+
+    // Capture destination piece if present
+    Piece* target = board.getPiece(to);
+    if (target != nullptr) {
+        board.removePiece(to);
+    }
+
+    // Move piece
+    board.setPiece(to, piece);
+    board.setPiece(from, nullptr);
+    piece->setPosition(to);
+
+    // Track pawn double move for en passant
+    if (piece->getPieceName() == "Pawn" &&
+        abs(to.getRow() - from.getRow()) == 2) {
+        board.setLastPawnDoubleMove(to);
+    }
+    else {
+        board.clearLastPawnDoubleMove();
+    }
+
+    // Pawn promotion
+    if (piece->getPieceName() == "Pawn") {
+        if ((piece->getColor() == 'W' && to.getRow() == 0) ||
+            (piece->getColor() == 'B' && to.getRow() == 7)) {
+            promotePawn(to);
+        }
+    }
+
+    return true;
+}
+
+bool Game::makeMove(string fromStr, string toStr) {
+    Position from = parsePosition(fromStr);
+    Position to = parsePosition(toStr);
+
+    if (!from.isValid() || !to.isValid()) {
+        cout << "Invalid square.\n";
+        return false;
+    }
+
+    Piece* piece = board.getPiece(from);
+    if (piece == nullptr) {
+        cout << "No piece at " << fromStr << ".\n";
+        return false;
+    }
+
+    if (piece->getColor() != currentPlayer) {
+        cout << "That is not your piece.\n";
+        return false;
+    }
+
+    if (!piece->isValidMove(to, board)) {
+        return false;
+    }
+
+    // --- Simulate move to check for self-check ---
+    int sr = from.getRow(), sc = from.getCol();
+    int dr = to.getRow(), dc = to.getCol();
+    Piece* captured = board.getPiece(dr, dc);
+
+    board.setPiece(dr, dc, piece);
+    board.setPiece(sr, sc, nullptr);
+    Position oldPos = piece->getPosition();
+    piece->setPosition(to);
+
+    bool inCheck = board.isInCheck(currentPlayer);
+
+    // Undo simulation
+    board.setPiece(sr, sc, piece);
+    board.setPiece(dr, dc, captured);
+    piece->setPosition(oldPos);
+
+    if (inCheck) {
+        cout << "Move leaves king in check!\n";
+        return false;
+    }
+
+    // --- Execute the real move ---
+
+    // Castling
+    if (piece->getPieceName() == "King" &&
+        abs(to.getCol() - from.getCol()) == 2) {
+        return executeCastling(static_cast<King*>(piece), from, to);
+    }
+
+    return executeMove(piece, from, to);
+}
+
+// =================================================
+//                      MAIN
+// =================================================
+
+int main() {
+    Game game;
+    game.play();
+    return 0;
+}
