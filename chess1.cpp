@@ -351,8 +351,7 @@ bool Piece::isPathClear(Position dest, Board& board) {
     Piece* target = board.getPiece(dest);
     if (target == nullptr) return true;
     return target->getColor() != color;
-<<<<<<< HEAD
-}
+};
 
 // =================================================
 //                PAWN
@@ -440,5 +439,51 @@ bool Queen::isValidMove(Position dest, Board& board) {
         position.getRow() == dest.getRow() ||
         position.getCol() == dest.getCol())
         return isPathClear(dest, board);
+    return false;
+}
+
+// =================================================
+//                KING
+// =================================================
+bool King::isCastlingValid(Position dest, Board& board) {
+    int r = position.getRow();
+    int direction = (dest.getCol() > position.getCol() ? 1 : -1);
+    int rookCol = (direction == 1 ? 7 : 0);
+
+    Piece* rook = board.getPiece(r, rookCol);
+    if (!rook) return false;
+    if (rook->getPieceName() != "Rook") return false;
+    if (rook->getHasMoved()) return false;
+
+    int cStart = position.getCol();
+    for (int c = minValue(cStart, rookCol) + 1; c < maxValue(cStart, rookCol); c++) {
+        if (board.getPiece(r, c) != nullptr) return false;
+    }
+
+    // Check if king passes through or ends in check
+    char opponentColor = (color == 'W' ? 'B' : 'W');
+    for (int c = cStart; c != dest.getCol() + direction; c += direction) {
+        if (board.isSquareUnderAttack(Position(r, c), opponentColor))
+            return false;
+    }
+
+    return true;
+}
+
+bool King::isValidMove(Position dest, Board& board) {
+    int r = absValue(dest.getRow() - position.getRow());
+    int c = absValue(dest.getCol() - position.getCol());
+
+    // normal king move
+    if (r <= 1 && c <= 1) {
+        Piece* t = board.getPiece(dest);
+        return (t == nullptr || t->getColor() != color);
+    }
+
+    // castling
+    if (!hasMoved && r == 0 && c == 2) {
+        return isCastlingValid(dest, board);
+    }
+
     return false;
 }
